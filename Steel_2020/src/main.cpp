@@ -11,22 +11,24 @@
 // Robot Configuration:
 // [Name]               [Type]        [Port(s)]
 // Controller1          controller                    
-// FrontLeft            motor         11              
-// FrontRight           motor         12              
+// FrontLeft            motor         19              
+// FrontRight           motor         9               
 // BackLeft             motor         20              
-// BackRight            motor         19              
-// fricken_yeet         motor         5               
-// LeftClaw             motor         1               
-// RightClaw            motor         6               
+// BackRight            motor         10              
+// LeftClaw             motor         18              
+// RightClaw            motor         8               
+// Indexer              motor         15              
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
 
 using namespace vex;
-vex::competition Competition;
+competition Competition;
 
 float move = 1;
-int dead_zone = 30;
+int dead_zone = 10;
+
+bool intake = false;
 
 #define btnNONE 0
 #define btnUP 1
@@ -79,7 +81,7 @@ int Ch2;
 int Ch3;
 int Ch4;
 
-void delay(int amount_eeeeee) { vex::task::sleep(amount_eeeeee); }
+void delay(int amount_eeeeee) { task::sleep(amount_eeeeee); }
 
 //===============================================MADNESS===============================================
 
@@ -125,7 +127,7 @@ int keyPressedRaw() {
 }
 int keyPressed() {
   int noBounceKey = keyPressedRaw();
-  vex::task::sleep(bounceDelay);
+  task::sleep(bounceDelay);
   if (noBounceKey == keyPressedRaw()) {
     return noBounceKey;
   } else {
@@ -259,8 +261,6 @@ void calabrate(void) {
   FrontRight.resetRotation();
   BackLeft.resetRotation();
   BackRight.resetRotation();
-
-  fricken_yeet.resetRotation();
 }
 
 void donut(void) {
@@ -274,12 +274,12 @@ void donut(void) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
-  FrontLeft.spin(vex::directionType::fwd, F_Left, vex::velocityUnits::pct);
-  BackLeft.spin(vex::directionType::fwd, B_Left, vex::velocityUnits::pct);
-  FrontRight.spin(vex::directionType::fwd, F_Right, vex::velocityUnits::pct);
-  BackRight.spin(vex::directionType::fwd, B_Right, vex::velocityUnits::pct);
+  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 
-  vex::task::sleep(2071);
+  task::sleep(2071);
 }
 
 void Move(int Ch1_, int Ch3_, int Ch4_) {
@@ -292,10 +292,10 @@ void Move(int Ch1_, int Ch3_, int Ch4_) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
-  FrontLeft.spin(vex::directionType::fwd, F_Left, vex::velocityUnits::pct);
-  BackLeft.spin(vex::directionType::fwd, B_Left, vex::velocityUnits::pct);
-  FrontRight.spin(vex::directionType::fwd, F_Right, vex::velocityUnits::pct);
-  BackRight.spin(vex::directionType::fwd, B_Right, vex::velocityUnits::pct);
+  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 }
 
 void pre_auton(void) {
@@ -318,17 +318,17 @@ void pre_auton(void) {
 
 void autonFrontRow() {
   // win
-  vex::task::sleep(2000);
+  task::sleep(2000);
 }
 
 void autonBackRow() {
   // win
-  vex::task::sleep(2000);
+  task::sleep(2000);
 }
 
 void autonSkills() {
   // win
-  vex::task::sleep(2000);
+  task::sleep(2000);
 }
 
 void auton(void) {
@@ -340,10 +340,6 @@ void auton(void) {
     autonSkills();
   }
 
-  fricken_yeet.rotateTo(830, degrees);
-
-  fricken_yeet.rotateTo(10, degrees);
-
   notificationHUD("Auton: DONE");
   Controller1.rumble(".");
 }
@@ -353,16 +349,16 @@ void RCDrive(void) {
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
 
-  if(Ch1 < dead_zone && Ch1 > -dead_zone){
+  if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
   }
-  if(Ch2 < dead_zone && Ch2 > -dead_zone){
+  if (Ch2 < dead_zone && Ch2 > -dead_zone) {
     Ch2 = 0;
   }
-  if(Ch3 < dead_zone && Ch3 > -dead_zone){
+  if (Ch3 < dead_zone && Ch3 > -dead_zone) {
     Ch3 = 0;
   }
-  if(Ch4 < dead_zone && Ch4 > -dead_zone){
+  if (Ch4 < dead_zone && Ch4 > -dead_zone) {
     Ch4 = 0;
   }
 
@@ -371,10 +367,10 @@ void RCDrive(void) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
-  FrontLeft.spin(vex::directionType::fwd, F_Left, vex::velocityUnits::pct);
-  BackLeft.spin(vex::directionType::fwd, B_Left, vex::velocityUnits::pct);
-  FrontRight.spin(vex::directionType::fwd, F_Right, vex::velocityUnits::pct);
-  BackRight.spin(vex::directionType::fwd, B_Right, vex::velocityUnits::pct);
+  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 }
 
 void RCDrive2(void) {
@@ -382,16 +378,16 @@ void RCDrive2(void) {
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
 
-  if(Ch1 < dead_zone && Ch1 > -dead_zone){
+  if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
   }
-  if(Ch2 < dead_zone && Ch2 > -dead_zone){
+  if (Ch2 < dead_zone && Ch2 > -dead_zone) {
     Ch2 = 0;
   }
-  if(Ch3 < dead_zone && Ch3 > -dead_zone){
+  if (Ch3 < dead_zone && Ch3 > -dead_zone) {
     Ch3 = 0;
   }
-  if(Ch4 < dead_zone && Ch4 > -dead_zone){
+  if (Ch4 < dead_zone && Ch4 > -dead_zone) {
     Ch4 = 0;
   }
 
@@ -400,10 +396,10 @@ void RCDrive2(void) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
-  FrontLeft.spin(vex::directionType::fwd, F_Left, vex::velocityUnits::pct);
-  BackLeft.spin(vex::directionType::fwd, B_Left, vex::velocityUnits::pct);
-  FrontRight.spin(vex::directionType::fwd, F_Right, vex::velocityUnits::pct);
-  BackRight.spin(vex::directionType::fwd, B_Right, vex::velocityUnits::pct);
+  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 }
 
 void tankDrive(void) {
@@ -411,16 +407,16 @@ void tankDrive(void) {
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
 
-  if(Ch1 < dead_zone && Ch1 > -dead_zone){
+  if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
   }
-  if(Ch2 < dead_zone && Ch2 > -dead_zone){
+  if (Ch2 < dead_zone && Ch2 > -dead_zone) {
     Ch2 = 0;
   }
-  if(Ch3 < dead_zone && Ch3 > -dead_zone){
+  if (Ch3 < dead_zone && Ch3 > -dead_zone) {
     Ch3 = 0;
   }
-  if(Ch4 < dead_zone && Ch4 > -dead_zone){
+  if (Ch4 < dead_zone && Ch4 > -dead_zone) {
     Ch4 = 0;
   }
 
@@ -429,10 +425,22 @@ void tankDrive(void) {
   F_Right = Ch2 - Ch4;
   B_Right = Ch2 + Ch4;
 
-  FrontLeft.spin(vex::directionType::fwd, F_Left, vex::velocityUnits::pct);
-  BackLeft.spin(vex::directionType::fwd, B_Left, vex::velocityUnits::pct);
-  FrontRight.spin(vex::directionType::fwd, F_Right, vex::velocityUnits::pct);
-  BackRight.spin(vex::directionType::fwd, B_Right, vex::velocityUnits::pct);
+  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
+}
+
+void intakeRoutine() {
+  if (intake) {
+    intake = false;
+    LeftClaw.stop();
+    RightClaw.stop();
+  } else {
+    intake = true;
+    LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+    RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  }
 }
 
 void user(void) {
@@ -442,10 +450,9 @@ void user(void) {
   BackLeft.setStopping(hold);
   BackRight.setStopping(hold);
 
-  while (1) {
+  Controller1.ButtonL1.pressed(intakeRoutine);
 
-    Brain.Screen.setCursor(10, 10);
-    Brain.Screen.print(fricken_yeet.rotation(deg));
+  while (1) {
 
     if (keyPressed() == btnB && 1 == 2) {
 
@@ -462,13 +469,7 @@ void user(void) {
       delay(2500);
     }
 
-    if (keyPressed() == btnY) {
-      fricken_yeet.rotateTo(830, degrees);
-
-      fricken_yeet.rotateTo(10, degrees);
-    }
-
-     if (keyPressed() == btnUP) {
+    if (keyPressed() == btnUP) {
       move = 1;
     }
     if (keyPressed() == btnDOWN) {
@@ -488,17 +489,27 @@ void user(void) {
     default:
       break;
     }
-    if(keyPressed() == btnL1){
-      LeftClaw.spin(vex::directionType::fwd, 100, vex::velocityUnits::pct);
-      RightClaw.spin(vex::directionType::fwd, 100, vex::velocityUnits::pct);
-    } else if(keyPressed() == btnL2){
-      LeftClaw.spin(vex::directionType::rev, 100, vex::velocityUnits::pct);
-      RightClaw.spin(vex::directionType::rev, 100, vex::velocityUnits::pct);
+
+    if (keyPressed() == btnL2) {
+      LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
+      RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
     } else {
-      LeftClaw.stop();
-      RightClaw.stop();
+      if (intake) {
+        LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+        RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+      } else {
+        LeftClaw.stop();
+        RightClaw.stop();
+      }
     }
 
+    if (keyPressed() == btnR1) {
+      Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+    } else if (keyPressed() == btnR2) {
+      Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+    } else {
+      Indexer.stop();
+    }
   }
 }
 
@@ -517,6 +528,6 @@ int main() {
       statusHUD();
       tempStatus = currStatus();
     }
-    vex::task::sleep(200);
+    task::sleep(200);
   }
 }
