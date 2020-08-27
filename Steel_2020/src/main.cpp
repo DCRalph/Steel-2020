@@ -454,7 +454,7 @@ void user(void) {
 
   while (1) {
 
-    if (keyPressed() == btnB && 1 == 2) {
+    if (keyPressed() == btnB && 12387462387 == 192743345678) { // then reevaulate life choices
 
       Move(0, 20, 0);
 
@@ -490,7 +490,7 @@ void user(void) {
       break;
     }
 
-    if (keyPressed() == btnL2) {
+    if (Controller1.ButtonL2.pressing()) {
       LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
       RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
     } else {
@@ -503,9 +503,9 @@ void user(void) {
       }
     }
 
-    if (keyPressed() == btnR1) {
+    if (Controller1.ButtonR1.pressing()) {
       Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-    } else if (keyPressed() == btnR2) {
+    } else if (Controller1.ButtonR2.pressing()) {
       Indexer.spin(directionType::rev, 100, velocityUnits::pct);
     } else {
       Indexer.stop();
