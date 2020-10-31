@@ -9,13 +9,20 @@ brain  Brain;
 
 // VEXcode device constructors
 controller Controller1 = controller(primary);
-motor FrontLeft = motor(PORT19, ratio18_1, false);
-motor FrontRight = motor(PORT9, ratio18_1, true);
-motor BackLeft = motor(PORT20, ratio18_1, false);
-motor BackRight = motor(PORT10, ratio18_1, true);
-motor LeftClaw = motor(PORT18, ratio18_1, true);
-motor RightClaw = motor(PORT8, ratio18_1, false);
-motor Indexer = motor(PORT15, ratio18_1, true);
+motor FrontLeft = motor(PORT11, ratio18_1, false);
+motor FrontRight = motor(PORT12, ratio18_1, true);
+motor BackLeft = motor(PORT16, ratio18_1, false);
+motor BackRight = motor(PORT17, ratio18_1, true);
+motor LeftClaw = motor(PORT1, ratio18_1, true);
+motor RightClaw = motor(PORT2, ratio18_1, false);
+motor Indexer = motor(PORT10, ratio36_1, true);
+motor shitter = motor(PORT9, ratio36_1, false);
+/*vex-vision-config:begin*/
+signature Vision__RED_BALL = signature (1, 5791, 10559, 8174, -1277, 445, -416, 0.8, 0);
+signature Vision__BLUE_BALL = signature (2, -3389, -1093, -2241, 1489, 15421, 8455, 0.8, 0);
+vision Vision = vision (PORT20, 74, Vision__RED_BALL, Vision__BLUE_BALL);
+/*vex-vision-config:end*/
+bumper ball = bumper(Brain.ThreeWirePort.H);
 
 // VEXcode generated functions
 // define variable for remote controller enable/disable

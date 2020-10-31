@@ -11,24 +11,44 @@
 // Robot Configuration:
 // [Name]               [Type]        [Port(s)]
 // Controller1          controller                    
-// FrontLeft            motor         19              
-// FrontRight           motor         9               
-// BackLeft             motor         20              
-// BackRight            motor         10              
-// LeftClaw             motor         18              
-// RightClaw            motor         8               
-// Indexer              motor         15              
+// FrontLeft            motor         11              
+// FrontRight           motor         12              
+// BackLeft             motor         16              
+// BackRight            motor         17              
+// LeftClaw             motor         1               
+// RightClaw            motor         2               
+// Indexer              motor         10              
+// shitter              motor         9               
+// Vision               vision        20              
+// ball                 bumper        H               
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include <string>
 
 using namespace vex;
 competition Competition;
 
-float move = 1;
-int dead_zone = 10;
+float move_max = 1;
+float move_min = .3;
+
+float move = move_max;
+
+int dead_zone = 20;
 
 bool intake = false;
+
+bool automatic = true;
+bool ball_found = false;
+
+#define NONE 2
+
+int my_color;
+int ball_color = NONE;
+
+double last_pic;
+;
+double now;
 
 #define btnNONE 0
 #define btnUP 1
@@ -65,8 +85,19 @@ bool intake = false;
 #define AUTON_TYPE 1
 #define AUTON_DRIVE 2
 
+int Fwd = 1;
+int Rev = 2;
+
+int Pct = 1;
+int Rpm = 2;
+int Dps = 3;
+
 int armlimitup = 900;
 int armlimitdown = 130;
+
+int power_usage = 0;
+
+bool screen = false;
 
 bool isCursorOn = false;
 int tempStatus = 0;
@@ -94,7 +125,7 @@ int configuration[maxMenus] = {0, 0, 0};
 std::string menuTypes[maxMenus] = {"Color: ", "Option: ", "Drive: "};
 
 std::string menuOptions[maxMenus][maxOptions] = {{"Red", "Blue", "Hmmm"},
-                                                 {"Front", "Back", "Skills"},
+                                                 {"Left", "Right", "Skills"},
                                                  {"RC", "Tank", "RC2"}};
 
 int keyPressedRaw() {
@@ -263,6 +294,18 @@ void calabrate(void) {
   BackRight.resetRotation();
 }
 
+void intakeRoutine() {
+  if (intake) {
+    intake = false;
+    LeftClaw.stop();
+    RightClaw.stop();
+  } else {
+    intake = true;
+    LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+    RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  }
+}
+
 void donut(void) {
   // does a donut
   Ch1 = -100;
@@ -298,44 +341,170 @@ void Move(int Ch1_, int Ch3_, int Ch4_) {
   BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 }
 
+void Move_f(int d, int s) {
+
+  FrontLeft.rotateFor(d, rev, false);
+  BackLeft.rotateFor(d, rev, false);
+  FrontRight.rotateFor(d, rev, false);
+  BackRight.rotateFor(d, rev, true);
+}
+
+void Move_d(float mm, int s) {
+
+  float rot = mm / 330;
+
+  rot *= 360;
+  rot *= 1.41;
+
+  FrontLeft.startRotateFor(rot, deg, s, velocityUnits::pct);
+  BackLeft.startRotateFor(rot, deg, s, velocityUnits::pct);
+  FrontRight.startRotateFor(rot, deg, s, velocityUnits::pct);
+  BackRight.rotateFor(rot, deg, s, velocityUnits::pct);
+}
+
 void pre_auton(void) {
   menuCONFIG();
-
-  if (getValues(AUTON_COLOR) == RED) {
-    Brain.Screen.setFillColor(red);
-  } else if (getValues(AUTON_COLOR) == BLUE) {
-    Brain.Screen.setFillColor(blue);
-  }
-
-  Brain.Screen.drawRectangle(-10, -10, 500, 500);
-
-  Brain.Screen.setPenColor(color::white);
-  Brain.Screen.setFont(prop60);
-  Brain.Screen.printAt(150, 120, "2903 S");
 
   Controller1.rumble(".");
 }
 
-void autonFrontRow() {
+void autonLeftRow() {
   // win
-  task::sleep(2000);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  Move(25, 0, 0); // crab
+  delay(1100);
+  Move(0, 0, 0);
+  delay(200);
+
+  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
+
+  Move(0, 50, 0);
+  delay(700);
+
+  Indexer.stop();
+
+  delay(300);
+  Move(0, 0, 0);
+  delay(100);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  delay(200);
+
+  LeftClaw.stop();
+  RightClaw.stop();
+
+  delay(500);
+  Indexer.stop();
+
+  Move(0, -50, -50);
+  delay(500);
+  Move(0, 0, 0);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  delay(100);
+  Move(-80, 0, 0);
+  delay(1350);
+
+  Move(0, 0, 0);
+  delay(100);
+
+  Move(0, 50, 0);
+  delay(1000);
+  Move(0, 0, 0);
+  delay(100);
+
+  delay(4000);
+  Indexer.stop();
+
+  Move(0, -85, 0);
+  delay(500);
+  Move(0, 0, 0);
 }
 
-void autonBackRow() {
+void autonRightRow() {
   // win
-  task::sleep(2000);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  Move(-25, 0, 0); // crab
+  delay(1100);
+  Move(0, 0, 0);
+  delay(200);
+
+  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
+
+  Move(0, 50, 0);
+  delay(700);
+
+  Indexer.stop();
+
+  delay(300);
+  Move(0, 0, 0);
+  delay(100);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  delay(200);
+
+  LeftClaw.stop();
+  RightClaw.stop();
+
+  delay(500);
+  Indexer.stop();
+
+  Move(0, 50, 50);
+  delay(500);
+  Move(0, 0, 0);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  delay(100);
+  Move(80, 0, 0);
+  delay(1350);
+
+  Move(0, 0, 0);
+  delay(100);
+
+  Move(0, 50, 0);
+  delay(1000);
+  Move(0, 0, 0);
+  delay(100);
+
+  delay(4000);
+  Indexer.stop();
+
+  Move(0, -100, 0);
+  delay(500);
+  Move(0, 0, 0);
 }
 
 void autonSkills() {
   // win
-  task::sleep(2000);
+
+  Move_d(100, 20);
+
+  // FrontLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
+  // //BackLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
+  // //FrontRight.startRotateFor(720, deg, 10, velocityUnits::pct);
+  // BackRight.rotateFor(720, deg, 10, velocityUnits::pct);
+
+  // delay(1000);
+
+  // // FrontLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
+  // BackLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
+  // FrontRight.rotateFor(720, deg, 10, velocityUnits::pct);
+  // // BackRight.rotateFor(720, deg, 10, velocityUnits::pct);
 }
 
 void auton(void) {
   if (getValues(AUTON_TYPE) == FRONT) {
-    autonFrontRow();
+    autonLeftRow();
   } else if (getValues(AUTON_TYPE) == BACK) {
-    autonBackRow();
+    autonRightRow();
   } else if (getValues(AUTON_TYPE) == SKILLS) {
     autonSkills();
   }
@@ -348,6 +517,7 @@ void RCDrive(void) {
   Ch1 = Controller1.Axis1.position(percent) * move;
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
+  Ch4 = Ch4 * .60;
 
   if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
@@ -368,9 +538,10 @@ void RCDrive(void) {
   B_Right = Ch3 - Ch4 + Ch1;
 
   FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
-  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
   FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
+
   BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
 }
 
 void RCDrive2(void) {
@@ -431,18 +602,6 @@ void tankDrive(void) {
   BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
 }
 
-void intakeRoutine() {
-  if (intake) {
-    intake = false;
-    LeftClaw.stop();
-    RightClaw.stop();
-  } else {
-    intake = true;
-    LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-    RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-  }
-}
-
 void user(void) {
 
   FrontLeft.setStopping(hold);
@@ -450,30 +609,39 @@ void user(void) {
   BackLeft.setStopping(hold);
   BackRight.setStopping(hold);
 
-  Controller1.ButtonL1.pressed(intakeRoutine);
+  LeftClaw.setStopping(hold);
+  RightClaw.setStopping(hold);
+
+  Indexer.setStopping(hold);
+  shitter.setStopping(hold);
+
+  Vision.setLedMode(vision::ledMode::manual);
+  Vision.setBrightness(100);
+  Vision.setLedColor(0, 200, 0);
+
+  // Controller1.ButtonL1.pressed(intakeRoutine);
+
+  my_color = getValues(AUTON_COLOR);
+
+  last_pic = Brain.timer(msec);
 
   while (1) {
+    now = Brain.timer(msec);
 
-    if (keyPressed() == btnB && 12387462387 == 192743345678) { // then reevaulate life choices
+    if (keyPressed() == btnY) {
+    }
 
-      Move(0, 20, 0);
-
-      delay(2000);
-
-      Move(20, 0, 0);
-
-      delay(2000);
-
-      Move(0, 30, 0);
-
-      delay(2500);
+    if (keyPressed() == btnY) { // then reevaulate life choices
+      automatic = !automatic;
+      while (keyPressed() == btnY)
+        ;
     }
 
     if (keyPressed() == btnUP) {
-      move = 1;
+      move = move_max;
     }
     if (keyPressed() == btnDOWN) {
-      move = .2;
+      move = move_min;
     }
 
     switch (getValues(AUTON_DRIVE)) {
@@ -490,26 +658,191 @@ void user(void) {
       break;
     }
 
-    if (Controller1.ButtonL2.pressing()) {
+    // if (Controller1.ButtonL2.pressing()) {
+    //   LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
+    //   RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
+    // } else {
+    //   if (intake) {
+    //     LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+    //     RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+    //   } else {
+    //     LeftClaw.stop();
+    //     RightClaw.stop();
+    //   }
+    // }
+
+    if (Controller1.ButtonL1.pressing()) {
+      LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+      RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+    } else if (Controller1.ButtonL2.pressing()) {
       LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
       RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
     } else {
-      if (intake) {
-        LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-        RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-      } else {
-        LeftClaw.stop();
-        RightClaw.stop();
-      }
+      LeftClaw.stop();
+      RightClaw.stop();
     }
 
-    if (Controller1.ButtonR1.pressing()) {
-      Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-    } else if (Controller1.ButtonR2.pressing()) {
-      Indexer.spin(directionType::rev, 100, velocityUnits::pct);
-    } else {
-      Indexer.stop();
+    if (automatic) { //======================================================
+
+      if (now - last_pic > 500 || ball.pressing()) {
+        last_pic = now;
+
+        ball_found = false;
+        ball_color = NONE;
+
+        Vision.takeSnapshot(Vision__RED_BALL);
+
+        if (Vision.largestObject.exists && ball_found == false) {
+          ball_found = true;
+
+          ball_color = RED;
+        }
+        Vision.takeSnapshot(Vision__BLUE_BALL);
+
+        if (Vision.largestObject.exists && ball_found == false) {
+          ball_found = true;
+
+          ball_color = BLUE;
+        }
+      }
+
+      if (Controller1.ButtonX.pressing()) {
+
+        if (Controller1.ButtonR1.pressing()) {
+          if (ball_color == NONE || ball_color != my_color) {
+
+            Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+            shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+          } else {
+
+            Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+            shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+          }
+        } else if (Controller1.ButtonR2.pressing()) {
+          if (ball_color == NONE ||
+              ball_color != my_color) { // wrong ball or no ball
+
+            shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+            if (ball.pressing()) {
+
+              Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+            } else {
+
+              Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+            }
+
+          } else {
+
+            Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+
+            if (ball.pressing()) {
+
+              shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+
+            } else {
+
+              shitter.spin(directionType::rev, 100, velocityUnits::pct);
+            }
+          }
+        } else {
+          Indexer.stop();
+          shitter.stop();
+        }
+
+      } else {
+        if (Controller1.ButtonR1.pressing()) {
+          if (ball_color == NONE || ball_color != my_color) {
+
+            Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+            shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+          } else {
+
+            Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+            shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+          }
+        } else if (Controller1.ButtonR2.pressing()) {
+          if (ball_color == NONE ||
+              ball_color != my_color) { // wrong ball or no ball
+
+            shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+            if (ball.pressing()) {
+
+              Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+            } else {
+
+              Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+            }
+
+          } else {
+
+            Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+
+            if (ball.pressing()) {
+
+              shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+
+            } else {
+
+              shitter.spin(directionType::rev, 100, velocityUnits::pct);
+            }
+          }
+        } else {
+          Indexer.stop();
+          shitter.stop();
+        }
+      }
+
+    } else { // auto ^^^^ .       manuel vvvvvv
+
+      if (Controller1.ButtonX.pressing()) {
+        if (Controller1.ButtonR1.pressing()) {
+          shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+          Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+        } else if (Controller1.ButtonR2.pressing()) {
+          shitter.spin(directionType::rev, 100, velocityUnits::pct);
+
+          if (ball.pressing()) {
+            Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+          } else {
+            Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+          }
+
+        } else {
+          Indexer.stop();
+          shitter.stop();
+        }
+      } else {
+        if (Controller1.ButtonR1.pressing()) {
+
+          shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+
+          Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+        } else if (Controller1.ButtonR2.pressing()) {
+          Indexer.spin(directionType::rev, 100, velocityUnits::pct);
+
+          if (!ball.pressing()) {
+            shitter.spin(directionType::rev, 100, velocityUnits::pct);
+          } else {
+            // shitter.stop();
+            shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+          }
+
+        } else {
+          Indexer.stop();
+          shitter.stop();
+        }
+      }
     }
+    // looooooooooooooooooooooooooooooooooooooop
   }
 }
 
@@ -524,6 +857,68 @@ int main() {
   Competition.drivercontrol(user);
 
   while (1) {
+    power_usage = 0;
+    power_usage += FrontLeft.power(watt);
+    power_usage += FrontRight.power(watt);
+    power_usage += BackLeft.power(watt);
+    power_usage += BackRight.power(watt);
+
+    power_usage += Indexer.power(watt);
+
+    power_usage += LeftClaw.power(watt);
+    power_usage += RightClaw.power(watt);
+
+    if (Brain.Screen.pressing() && screen == false) {
+      screen = true;
+      Brain.Screen.clearScreen();
+    }
+
+    if (screen) {
+      Brain.Screen.setFillColor(blue);
+      Brain.Screen.drawRectangle(5, 20, 60, 30);
+
+      Brain.Screen.setPenColor(color::white);
+      Brain.Screen.setFont(prop20);
+      Brain.Screen.printAt(25, 39, "Back");
+
+      Brain.Screen.setCursor(1, 10);
+      Brain.Screen.print(my_color);
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(1, 15);
+      Brain.Screen.print(ball_color);
+      Brain.Screen.print("  ");
+
+      Brain.Screen.setCursor(1, 20);
+      Brain.Screen.print(ball.pressing());
+      Brain.Screen.print("  ");
+
+      if (Brain.Screen.pressing()) {
+
+        int xPos = Brain.Screen.xPosition();
+        int yPos = Brain.Screen.yPosition();
+        while (Brain.Screen.pressing())
+          ;
+
+        if (xPos > 5 && xPos < 5 + 60 && yPos > 20 && yPos < 20 + 30) {
+          screen = false;
+          Brain.Screen.clearScreen();
+        }
+      }
+
+    } else {
+      if (getValues(AUTON_COLOR) == RED) {
+        Brain.Screen.setFillColor(red);
+      } else if (getValues(AUTON_COLOR) == BLUE) {
+        Brain.Screen.setFillColor(blue);
+      }
+
+      Brain.Screen.drawRectangle(-10, -10, 500, 500);
+
+      Brain.Screen.setPenColor(color::white);
+      Brain.Screen.setFont(prop60);
+      Brain.Screen.printAt(150, 120, "2903 S");
+    }
+
     if (tempStatus != currStatus()) {
       statusHUD();
       tempStatus = currStatus();
