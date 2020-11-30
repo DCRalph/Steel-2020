@@ -13,8 +13,8 @@ motor FrontLeft = motor(PORT11, ratio18_1, false);
 motor FrontRight = motor(PORT12, ratio18_1, true);
 motor BackLeft = motor(PORT16, ratio18_1, false);
 motor BackRight = motor(PORT17, ratio18_1, true);
-motor LeftClaw = motor(PORT1, ratio18_1, true);
-motor RightClaw = motor(PORT2, ratio18_1, false);
+motor LeftClaw = motor(PORT1, ratio18_1, false);
+motor RightClaw = motor(PORT2, ratio18_1, true);
 motor Indexer = motor(PORT10, ratio36_1, true);
 motor shitter = motor(PORT9, ratio36_1, false);
 /*vex-vision-config:begin*/

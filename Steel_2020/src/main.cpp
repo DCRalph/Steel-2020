@@ -10,17 +10,17 @@
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // Robot Configuration:
 // [Name]               [Type]        [Port(s)]
-// Controller1          controller                    
-// FrontLeft            motor         11              
-// FrontRight           motor         12              
-// BackLeft             motor         16              
-// BackRight            motor         17              
-// LeftClaw             motor         1               
-// RightClaw            motor         2               
-// Indexer              motor         10              
-// shitter              motor         9               
-// Vision               vision        20              
-// ball                 bumper        H               
+// Controller1          controller
+// FrontLeft            motor         11
+// FrontRight           motor         12
+// BackLeft             motor         16
+// BackRight            motor         17
+// LeftClaw             motor         1
+// RightClaw            motor         2
+// Indexer              motor         10
+// shitter              motor         9
+// Vision               vision        20
+// ball                 bumper        H
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
@@ -294,6 +294,19 @@ void calabrate(void) {
   BackRight.resetRotation();
 }
 
+void calabrate_vision(void) {
+  while (keyPressed() != btnNONE)
+    ;
+
+  clearLine(0);
+  clearLine(1);
+  clearLine(2);
+
+  print("Press A", 1, 0);
+
+  Vision.setBrightness(0);
+}
+
 void intakeRoutine() {
   if (intake) {
     intake = false;
@@ -371,58 +384,145 @@ void pre_auton(void) {
 void autonLeftRow() {
   // win
 
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  Move(28, 0, 0); // crab
+  delay(500);
 
-  Move(25, 0, 0); // crab
-  delay(1100);
+  LeftClaw.spin(directionType::rev, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::rev, 100, velocityUnits::pct);
+
+  delay(700);
+
   Move(0, 0, 0);
+
   delay(200);
 
-  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
-
   Move(0, 50, 0);
-  delay(700);
+
+  delay(500);
+
+  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  delay(200);
 
   Indexer.stop();
 
-  delay(300);
-  Move(0, 0, 0);
-  delay(100);
+  delay(200);
 
   Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  delay(1000);
+
+  Indexer.stop();
+
+  delay(00);
+
+  Move(0, -80, 0);
+
+  delay(400);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+
   delay(200);
+
+  Indexer.stop();
+  shitter.stop();
 
   LeftClaw.stop();
   RightClaw.stop();
 
-  delay(500);
-  Indexer.stop();
+  Move(0, 0, -50);
 
-  Move(0, -50, -50);
-  delay(500);
+  delay(300);
+
+  Move(0, 0, 0);
+
+  Move(-80, 0, 0);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  LeftClaw.spin(directionType::rev, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::rev, 100, velocityUnits::pct);
+
+  delay(1300);
+
+  Indexer.stop();
+  shitter.stop();
+
+  LeftClaw.stop();
+  RightClaw.stop();
+
+  Move(0, 0, 0);
+
+  delay(100);
+
+  Move(0, 80, 0);
+
+  delay(800);
+
   Move(0, 0, 0);
 
   Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
 
-  delay(100);
-  Move(-80, 0, 0);
-  delay(1350);
-
-  Move(0, 0, 0);
-  delay(100);
-
-  Move(0, 50, 0);
   delay(1000);
-  Move(0, 0, 0);
-  delay(100);
 
-  delay(4000);
   Indexer.stop();
 
-  Move(0, -85, 0);
-  delay(500);
+  delay(300);
+
+  Move(0, -80, 0);
+
+  delay(1000);
+
   Move(0, 0, 0);
+
+  // LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  // RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
+
+  // Move(0, 50, 0);
+  // delay(700);
+
+  // Indexer.stop();
+
+  // delay(300);
+  // Move(0, 0, 0);
+  // delay(100);
+
+  // Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  // delay(200);
+
+  // LeftClaw.stop();
+  // RightClaw.stop();
+
+  // delay(500);
+  // Indexer.stop();
+
+  // Move(0, -50, -50);
+  // delay(500);
+  // Move(0, 0, 0);
+
+  // Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  // delay(100);
+  // Move(-80, 0, 0);
+  // delay(1350);
+
+  // Move(0, 0, 0);
+  // delay(100);
+
+  // Move(0, 50, 0);
+  // delay(1000);
+  // Move(0, 0, 0);
+  // delay(100);
+
+  // delay(4000);
+  // Indexer.stop();
+
+  // Move(0, -85, 0);
+  // delay(500);
+  // Move(0, 0, 0);
 }
 
 void autonRightRow() {
@@ -604,6 +704,8 @@ void tankDrive(void) {
 
 void user(void) {
 
+  delay(1000);
+
   FrontLeft.setStopping(hold);
   FrontRight.setStopping(hold);
   BackLeft.setStopping(hold);
@@ -629,12 +731,13 @@ void user(void) {
     now = Brain.timer(msec);
 
     if (keyPressed() == btnY) {
-    }
-
-    if (keyPressed() == btnY) { // then reevaulate life choices
       automatic = !automatic;
       while (keyPressed() == btnY)
         ;
+    }
+
+    if (keyPressed() == btnA) {
+      calabrate_vision();
     }
 
     if (keyPressed() == btnUP) {
@@ -642,6 +745,10 @@ void user(void) {
     }
     if (keyPressed() == btnDOWN) {
       move = move_min;
+    }
+
+    if (keyPressed() == btnRIGHT) {
+      auton();
     }
 
     switch (getValues(AUTON_DRIVE)) {
