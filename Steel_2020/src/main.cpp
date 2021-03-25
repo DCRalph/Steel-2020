@@ -21,16 +21,23 @@
 // shitter              motor         9
 // Vision               vision        20
 // ball                 bumper        H
+// frontLeftLine        line          F
+// frontRightLine       line          G
+// backLeftLine         line          E
+// backRightLine        line          D
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
+#include "iostream"
 #include "vex.h"
 #include <string>
 
 using namespace vex;
+using signature = vision::signature;
 competition Competition;
 
-float move_max = 1;
+float move_max = .9;
 float move_min = .3;
+float spin = 1;
 
 float move = move_max;
 
@@ -47,7 +54,7 @@ int my_color;
 int ball_color = NONE;
 
 double last_pic;
-;
+
 double now;
 
 #define btnNONE 0
@@ -84,16 +91,12 @@ double now;
 #define AUTON_COLOR 0
 #define AUTON_TYPE 1
 #define AUTON_DRIVE 2
+#define CLOSED 0
+#define OPEN 1
 
-int Fwd = 1;
-int Rev = 2;
+int line_value = 66;
 
-int Pct = 1;
-int Rpm = 2;
-int Dps = 3;
-
-int armlimitup = 900;
-int armlimitdown = 130;
+bool open_or_closed = CLOSED;
 
 int power_usage = 0;
 
@@ -172,6 +175,8 @@ void clearLine(int l_row) {
   } else
     Controller1.Screen.clearLine();
 }
+void clearScreen(void) { Controller1.Screen.clearScreen(); }
+
 void print(std::string text, int row, int col) {
   clearLine(row);
   if (isCursorOn == true) {
@@ -181,6 +186,14 @@ void print(std::string text, int row, int col) {
   }
   Controller1.Screen.print(text.c_str());
 }
+
+void print2(std::string text, int row, int col) {
+  Controller1.Screen.setCursor(row, 0);
+  Controller1.Screen.print("               ");
+  Controller1.Screen.setCursor(row, col);
+  Controller1.Screen.print(text.c_str());
+}
+
 void selector(int row) {
   isCursorOn = true;
   for (int i = 1; i <= screenTextHeight; i++) {
@@ -298,13 +311,62 @@ void calabrate_vision(void) {
   while (keyPressed() != btnNONE)
     ;
 
-  clearLine(0);
-  clearLine(1);
-  clearLine(2);
+  clearScreen();
 
-  print("Press A", 1, 0);
+  bool calabrating = true;
+  bool wantRed = true;
+  bool wantBlue = false;
 
-  Vision.setBrightness(0);
+  while (calabrating) {
+
+    if (wantRed) {
+      print2("Red ball plz", 1, 0);
+      print2("Press A", 2, 0);
+
+      if (keyPressed() == btnA && !ball.pressing()) {
+        print2("Put in a ball", 1, 0);
+        print2("Dumb shit!", 2, 0);
+        delay(2000);
+        while (keyPressed() != btnNONE)
+          ;
+      }
+
+      if (keyPressed() == btnA && ball.pressing()) {
+        // calbrate
+
+        wantRed = false;
+        wantBlue = true;
+      }
+    }
+
+    if (wantBlue) {
+      print2("Blue ball plz", 0, 0);
+      print2("Press A", 2, 0);
+
+      if (keyPressed() == btnA && !ball.pressing()) {
+        print2("Put in a ball", 1, 0);
+        print2("Dumb shit!", 2, 0);
+        delay(2000);
+        while (keyPressed() != btnNONE)
+          ;
+      }
+
+      if (keyPressed() == btnA && ball.pressing()) {
+        // calbrate
+
+        signature Vision__BLUE_BALLj =
+            signature(2, -3389, -1093, -2241, 1489, 15421, 8455, 0.8, 0);
+
+        wantRed = false;
+        wantBlue = false;
+        calabrating = false;
+      }
+    }
+  }
+  clearScreen();
+  print2("Done", 0, 0);
+  delay(1000);
+  statusHUD();
 }
 
 void intakeRoutine() {
@@ -382,15 +444,93 @@ void pre_auton(void) {
 }
 
 void autonLeftRow() {
-  // win
 
-  Move(28, 0, 0); // crab
+  Move(40, 0, 0); // crab
+
+  LeftClaw.startRotateFor(-100, rotationUnits::deg); // open
+  RightClaw.startRotateFor(-100, rotationUnits::deg);
+
+  while (backLeftLine.value(percentUnits::pct) > line_value) // wait for line
+    ;
+
+  Move(0, 0, 0); // stop
+
+  delay(200);
+
+  Move(0, 50, 0); // foward
+
   delay(500);
 
-  LeftClaw.spin(directionType::rev, 100, velocityUnits::pct);
-  RightClaw.spin(directionType::rev, 100, velocityUnits::pct);
+  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct); // intake
+  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
 
-  delay(700);
+  delay(200);
+
+  Move(0, 0, 0);
+
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+
+  delay(1000);
+
+  Indexer.stop();
+
+  delay(200);
+
+  LeftClaw.stop();
+  RightClaw.stop();
+
+  delay(200);
+
+  FrontRight.spin(directionType::rev, 50, velocityUnits::pct);
+  BackRight.spin(directionType::rev, 50, velocityUnits::pct);
+
+  FrontLeft.spin(directionType::rev, 50, velocityUnits::pct);
+  BackLeft.spin(directionType::rev, 50, velocityUnits::pct);
+
+  while (frontRightLine.value(percentUnits::pct) > line_value)
+    ;
+
+  FrontRight.stop();
+  BackRight.stop();
+
+  while (frontLeftLine.value(percentUnits::pct) > line_value)
+    ;
+  delay(100);
+
+  FrontLeft.stop();
+  BackLeft.stop();
+
+  delay(100);
+
+  Move(0, 50, 0);
+
+  delay(500);
+
+  Move(0, 0, 0);
+
+  delay(200);
+
+  while (frontLeftLine.value(percentUnits::pct) > line_value) {
+    if (backLeftLine.value(percentUnits::pct) > line_value) {
+      BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
+      BackRight.spin(directionType::rev, 75, percentUnits::pct);
+      FrontLeft.spin(directionType::rev, 75, percentUnits::pct);
+      FrontRight.spin(directionType::fwd, 75, percentUnits::pct);
+
+    } else {
+      BackLeft.stop();
+      BackRight.stop();
+      FrontLeft.spin(directionType::rev, 85, percentUnits::pct);
+      FrontRight.spin(directionType::fwd, 85, percentUnits::pct);
+    }
+  }
+
+  BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
+  BackRight.spin(directionType::rev, 75, percentUnits::pct);
+  FrontLeft.spin(directionType::rev, 75, percentUnits::pct);
+  FrontRight.spin(directionType::fwd, 75, percentUnits::pct);
+
+  delay(60);
 
   Move(0, 0, 0);
 
@@ -398,131 +538,53 @@ void autonLeftRow() {
 
   Move(0, 50, 0);
 
-  delay(500);
+  delay(750);
 
-  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-
-  delay(200);
-
-  Indexer.stop();
-
-  delay(200);
+  Move(0, 0, 0);
 
   Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
 
-  delay(1000);
+  delay(750);
 
   Indexer.stop();
-
-  delay(00);
-
-  Move(0, -80, 0);
-
-  delay(400);
-
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
 
   delay(200);
 
-  Indexer.stop();
-  shitter.stop();
-
-  LeftClaw.stop();
-  RightClaw.stop();
-
-  Move(0, 0, -50);
+  Move(0, -50, 0); // back
 
   delay(300);
 
   Move(0, 0, 0);
 
-  Move(-80, 0, 0);
+  delay(200);
 
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+  while (frontLeftLine.value(percentUnits::pct) > line_value) {
+    if (backLeftLine.value(percentUnits::pct) > line_value) {
+      BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
+      BackRight.spin(directionType::rev, 75, percentUnits::pct);
+      FrontLeft.spin(directionType::rev, 75, percentUnits::pct);
+      FrontRight.spin(directionType::fwd, 75, percentUnits::pct);
 
-  LeftClaw.spin(directionType::rev, 100, velocityUnits::pct);
-  RightClaw.spin(directionType::rev, 100, velocityUnits::pct);
+    } else {
+      BackLeft.stop();
+      BackRight.stop();
+      FrontLeft.spin(directionType::rev, 85, percentUnits::pct);
+      FrontRight.spin(directionType::fwd, 85, percentUnits::pct);
+    }
+  }
 
-  delay(1300);
+  BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
+  BackRight.spin(directionType::rev, 75, percentUnits::pct);
+  FrontLeft.spin(directionType::rev, 75, percentUnits::pct);
+  FrontRight.spin(directionType::fwd, 75, percentUnits::pct);
 
-  Indexer.stop();
-  shitter.stop();
-
-  LeftClaw.stop();
-  RightClaw.stop();
+  delay(60);
 
   Move(0, 0, 0);
-
-  delay(100);
-
-  Move(0, 80, 0);
 
   delay(800);
 
   Move(0, 0, 0);
-
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-
-  delay(1000);
-
-  Indexer.stop();
-
-  delay(300);
-
-  Move(0, -80, 0);
-
-  delay(1000);
-
-  Move(0, 0, 0);
-
-  // LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-  // RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
-
-  // Move(0, 50, 0);
-  // delay(700);
-
-  // Indexer.stop();
-
-  // delay(300);
-  // Move(0, 0, 0);
-  // delay(100);
-
-  // Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-  // delay(200);
-
-  // LeftClaw.stop();
-  // RightClaw.stop();
-
-  // delay(500);
-  // Indexer.stop();
-
-  // Move(0, -50, -50);
-  // delay(500);
-  // Move(0, 0, 0);
-
-  // Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-
-  // delay(100);
-  // Move(-80, 0, 0);
-  // delay(1350);
-
-  // Move(0, 0, 0);
-  // delay(100);
-
-  // Move(0, 50, 0);
-  // delay(1000);
-  // Move(0, 0, 0);
-  // delay(100);
-
-  // delay(4000);
-  // Indexer.stop();
-
-  // Move(0, -85, 0);
-  // delay(500);
-  // Move(0, 0, 0);
 }
 
 void autonRightRow() {
@@ -601,6 +663,17 @@ void autonSkills() {
 }
 
 void auton(void) {
+  FrontLeft.setStopping(hold);
+  FrontRight.setStopping(hold);
+  BackLeft.setStopping(hold);
+  BackRight.setStopping(hold);
+
+  LeftClaw.setStopping(hold);
+  RightClaw.setStopping(hold);
+
+  Indexer.setStopping(coast);
+  shitter.setStopping(coast);
+
   if (getValues(AUTON_TYPE) == FRONT) {
     autonLeftRow();
   } else if (getValues(AUTON_TYPE) == BACK) {
@@ -617,7 +690,7 @@ void RCDrive(void) {
   Ch1 = Controller1.Axis1.position(percent) * move;
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
-  Ch4 = Ch4 * .60;
+  Ch4 = Ch4 * spin;
 
   if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
@@ -704,18 +777,19 @@ void tankDrive(void) {
 
 void user(void) {
 
-  delay(1000);
+  while (keyPressed() != btnNONE)
+    ;
 
-  FrontLeft.setStopping(hold);
-  FrontRight.setStopping(hold);
-  BackLeft.setStopping(hold);
-  BackRight.setStopping(hold);
+  FrontLeft.setStopping(brake);
+  FrontRight.setStopping(brake);
+  BackLeft.setStopping(brake);
+  BackRight.setStopping(brake);
 
-  LeftClaw.setStopping(hold);
-  RightClaw.setStopping(hold);
+  LeftClaw.setStopping(coast);
+  RightClaw.setStopping(coast);
 
-  Indexer.setStopping(hold);
-  shitter.setStopping(hold);
+  Indexer.setStopping(coast);
+  shitter.setStopping(coast);
 
   Vision.setLedMode(vision::ledMode::manual);
   Vision.setBrightness(100);
@@ -779,14 +853,34 @@ void user(void) {
     // }
 
     if (Controller1.ButtonL1.pressing()) {
+      LeftClaw.setStopping(coast);
+      RightClaw.setStopping(coast);
+
       LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
       RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+
+      open_or_closed = CLOSED;
+
     } else if (Controller1.ButtonL2.pressing()) {
-      LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
-      RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
+
+      if (open_or_closed == CLOSED) {
+        LeftClaw.setStopping(hold);
+        RightClaw.setStopping(hold);
+
+        LeftClaw.setVelocity(100, percentUnits::pct);
+        RightClaw.setVelocity(100, percentUnits::pct);
+
+        LeftClaw.startRotateFor(-100, rotationUnits::deg);
+        RightClaw.startRotateFor(-100, rotationUnits::deg);
+      }
+
+      open_or_closed = OPEN;
+
     } else {
-      LeftClaw.stop();
-      RightClaw.stop();
+      if (open_or_closed == CLOSED) {
+        LeftClaw.stop();
+        RightClaw.stop();
+      }
     }
 
     if (automatic) { //======================================================
@@ -799,17 +893,28 @@ void user(void) {
 
         Vision.takeSnapshot(Vision__RED_BALL);
 
-        if (Vision.largestObject.exists && ball_found == false) {
+        //&& Vision.largestObject.centerX > 90 && Vision.largestObject.centerX <
+        // 160 && Vision.largestObject.centerY > 90
+
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 20 &&
+            Vision.largestObject.centerX < 200 && ball_found == false) {
           ball_found = true;
 
           ball_color = RED;
+
+          Vision.setLedColor(255, 0, 0);
         }
         Vision.takeSnapshot(Vision__BLUE_BALL);
 
-        if (Vision.largestObject.exists && ball_found == false) {
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 20 &&
+            Vision.largestObject.centerX < 200 && ball_found == false) {
           ball_found = true;
 
           ball_color = BLUE;
+          Vision.setLedColor(0, 0, 255);
+        }
+        if (!ball_found) {
+          Vision.setLedColor(0, 255, 0);
         }
       }
 
@@ -958,10 +1063,15 @@ int main() {
 
   calabrate();
 
+  Vision.setLedMode(vision::ledMode::manual);
+  Vision.setLedBrightness(100);
+
   pre_auton();
 
   Competition.autonomous(auton);
   Competition.drivercontrol(user);
+
+  std::cout << "Hello World" << std::endl;
 
   while (1) {
     power_usage = 0;
@@ -997,6 +1107,26 @@ int main() {
 
       Brain.Screen.setCursor(1, 20);
       Brain.Screen.print(ball.pressing());
+      Brain.Screen.print("  ");
+
+      Brain.Screen.setCursor(2, 10);
+      Brain.Screen.print(LeftClaw.position(deg));
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(2, 15);
+      Brain.Screen.print(RightClaw.position(deg));
+      Brain.Screen.print("  ");
+
+      Brain.Screen.setCursor(3, 10);
+      Brain.Screen.print(frontLeftLine.value(percentUnits::pct));
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(3, 15);
+      Brain.Screen.print(frontRightLine.value(percentUnits::pct));
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(3, 20);
+      Brain.Screen.print(backLeftLine.value(percentUnits::pct));
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(3, 25);
+      Brain.Screen.print(backRightLine.value(percentUnits::pct));
       Brain.Screen.print("  ");
 
       if (Brain.Screen.pressing()) {

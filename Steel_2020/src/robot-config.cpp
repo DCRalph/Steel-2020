@@ -23,6 +23,10 @@ signature Vision__BLUE_BALL = signature (2, -3389, -1093, -2241, 1489, 15421, 84
 vision Vision = vision (PORT20, 74, Vision__RED_BALL, Vision__BLUE_BALL);
 /*vex-vision-config:end*/
 bumper ball = bumper(Brain.ThreeWirePort.H);
+line frontLeftLine = line(Brain.ThreeWirePort.F);
+line frontRightLine = line(Brain.ThreeWirePort.G);
+line backLeftLine = line(Brain.ThreeWirePort.E);
+line backRightLine = line(Brain.ThreeWirePort.D);
 
 // VEXcode generated functions
 // define variable for remote controller enable/disable
