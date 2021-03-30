@@ -75,7 +75,6 @@ double now;
 #define screenTextWidth 16
 #define screenTextHeight 3
 #define maxMenus 3
-#define maxOptions 3
 #define modeDisabled 0
 #define modeDriver 1
 #define modeAuton 2
@@ -104,6 +103,7 @@ bool screen = false;
 
 bool isCursorOn = false;
 int tempStatus = 0;
+int autoTempStatus = 0;
 
 int F_Left;
 int B_Left;
@@ -122,14 +122,15 @@ void delay(int amount_eeeeee) { task::sleep(amount_eeeeee); }
 std::string robotStatus[4] = {"Robot Disabled", "Driver Control",
                               "Auton Control ", "MODE ERROR    "};
 
-int maxMenusIndex[maxMenus] = {3, 3, 3};
+int maxMenusIndex[maxMenus] = {2, 7, 3};
 int configuration[maxMenus] = {0, 0, 0};
 
 std::string menuTypes[maxMenus] = {"Color: ", "Option: ", "Drive: "};
 
-std::string menuOptions[maxMenus][maxOptions] = {{"Red", "Blue", "Hmmm"},
-                                                 {"Left", "Right", "Skills"},
-                                                 {"RC", "Tank", "RC2"}};
+std::string menuOptions[maxMenus][7] = {
+    {"Red", "Blue", ""},
+    {"L 1", "L 2", "L 3", "R 1", "R 2", "R 3", "Skills"},
+    {"RC", "Tank", "RC2"}};
 
 int keyPressedRaw() {
   if (Controller1.ButtonUp.pressing() == true)
@@ -228,7 +229,8 @@ void statusHUD() {
   print(robotStatus[currStatus()], 1, 0);
   temp = menuOptions[0][configuration[0]] + " " +
          menuOptions[1][configuration[1]] + " " +
-         menuOptions[2][configuration[2]];
+         menuOptions[2][configuration[2]] + " ";
+  temp += automatic ? "V-" + menuOptions[0][configuration[0]] : "V-OFF ";
   print(temp, 2, 0);
 }
 void displayMenu(int currRow, int configuration[]) {
@@ -443,17 +445,41 @@ void pre_auton(void) {
   Controller1.rumble(".");
 }
 
-void autonLeftRow() {
+void intakeOn() {
+  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+}
+void intakeOff() {
+  LeftClaw.stop();
+  RightClaw.stop();
+}
+void intakeOpen() {
+  LeftClaw.startRotateFor(-100, rotationUnits::deg);
+  RightClaw.startRotateFor(-100, rotationUnits::deg);
+}
+void intakeClose() {
+  LeftClaw.startRotateFor(100, rotationUnits::deg);
+  RightClaw.startRotateFor(100, rotationUnits::deg);
+}
+void indexerOn() {
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+}
+void indexerOff() {
+  Indexer.stop();
+  shitter.stop();
+}
+
+void autonLeft(int whenStop) {
 
   Move(40, 0, 0); // crab
 
-  LeftClaw.startRotateFor(-100, rotationUnits::deg); // open
-  RightClaw.startRotateFor(-100, rotationUnits::deg);
+  intakeOpen();
 
   while (backLeftLine.value(percentUnits::pct) > line_value) // wait for line
     ;
 
-  Move(0, 0, 0); // stop
+  Move(0, 0, 0); // stop drive
 
   delay(200);
 
@@ -461,27 +487,25 @@ void autonLeftRow() {
 
   delay(500);
 
-  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct); // intake
-  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
+  intakeOn(); // intake on
 
   delay(200);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // stop drive
 
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  indexerOn(); // indexer on
 
   delay(1000);
 
-  Indexer.stop();
+  indexerOff(); // indexer off
 
   delay(200);
 
-  LeftClaw.stop();
-  RightClaw.stop();
+  intakeOff(); // intake off
 
   delay(200);
 
-  FrontRight.spin(directionType::rev, 50, velocityUnits::pct);
+  FrontRight.spin(directionType::rev, 50, velocityUnits::pct); // from here to
   BackRight.spin(directionType::rev, 50, velocityUnits::pct);
 
   FrontLeft.spin(directionType::rev, 50, velocityUnits::pct);
@@ -500,17 +524,23 @@ void autonLeftRow() {
   FrontLeft.stop();
   BackLeft.stop();
 
+  // here is the fancy rotate and wait for line
+
+  if (whenStop == 1)
+    return; // stop if only want to socre 1 ball
+
   delay(100);
 
-  Move(0, 50, 0);
+  Move(0, 50, 0); // foward
 
   delay(500);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // stop
 
   delay(200);
 
-  while (frontLeftLine.value(percentUnits::pct) > line_value) {
+  while (frontLeftLine.value(percentUnits::pct) >
+         line_value) { //    from here to
     if (backLeftLine.value(percentUnits::pct) > line_value) {
       BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
       BackRight.spin(directionType::rev, 75, percentUnits::pct);
@@ -532,21 +562,21 @@ void autonLeftRow() {
 
   delay(60);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // here is fancy auto correct strafe from goal 1 to goal 2
 
   delay(200);
 
-  Move(0, 50, 0);
+  Move(0, 50, 0); // forard
 
   delay(750);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // stop
 
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  indexerOn(); // score
 
   delay(750);
 
-  Indexer.stop();
+  indexerOff();
 
   delay(200);
 
@@ -554,11 +584,15 @@ void autonLeftRow() {
 
   delay(300);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // stop
+
+  if (whenStop == 2)
+    return; // stop if only want to socre 2 ball
 
   delay(200);
 
-  while (frontLeftLine.value(percentUnits::pct) > line_value) {
+  while (frontLeftLine.value(percentUnits::pct) >
+         line_value) { //    from here to
     if (backLeftLine.value(percentUnits::pct) > line_value) {
       BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
       BackRight.spin(directionType::rev, 75, percentUnits::pct);
@@ -580,14 +614,14 @@ void autonLeftRow() {
 
   delay(60);
 
-  Move(0, 0, 0);
+  Move(0, 0, 0); // here is fancy auto correct strafe from goal 2 to goal 3
 
   delay(800);
 
   Move(0, 0, 0);
 }
 
-void autonRightRow() {
+void autonRight(int whenStop) {
   // win
 
   Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
@@ -648,18 +682,6 @@ void autonSkills() {
   // win
 
   Move_d(100, 20);
-
-  // FrontLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
-  // //BackLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
-  // //FrontRight.startRotateFor(720, deg, 10, velocityUnits::pct);
-  // BackRight.rotateFor(720, deg, 10, velocityUnits::pct);
-
-  // delay(1000);
-
-  // // FrontLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
-  // BackLeft.startRotateFor(720, deg, 10, velocityUnits::pct);
-  // FrontRight.rotateFor(720, deg, 10, velocityUnits::pct);
-  // // BackRight.rotateFor(720, deg, 10, velocityUnits::pct);
 }
 
 void auton(void) {
@@ -674,13 +696,23 @@ void auton(void) {
   Indexer.setStopping(coast);
   shitter.setStopping(coast);
 
-  if (getValues(AUTON_TYPE) == FRONT) {
-    autonLeftRow();
-  } else if (getValues(AUTON_TYPE) == BACK) {
-    autonRightRow();
-  } else if (getValues(AUTON_TYPE) == SKILLS) {
+  if (configuration[1] == 0) { // L 1
+    autonLeft(1);
+  } else if (configuration[1] == 1) { // L 2
+    autonLeft(2);
+  } else if (configuration[1] == 2) { // L 3
+    autonLeft(3);
+  } else if (configuration[1] == 3) { // R 1
+    autonLeft(1);
+  } else if (configuration[1] == 4) { // R 2
+    autonLeft(2);
+  } else if (configuration[1] == 5) { // R 3
+    autonRight(3);
+  } else if (configuration[1] == 6) { // Skills
     autonSkills();
   }
+
+  std::cout << configuration[1] << std::endl;
 
   notificationHUD("Auton: DONE");
   Controller1.rumble(".");
@@ -811,7 +843,7 @@ void user(void) {
     }
 
     if (keyPressed() == btnA) {
-      calabrate_vision();
+      // calabrate_vision();
     }
 
     if (keyPressed() == btnUP) {
@@ -821,8 +853,23 @@ void user(void) {
       move = move_min;
     }
 
-    if (keyPressed() == btnRIGHT) {
+    if (keyPressed() == btnRIGHT && !Competition.isEnabled()) {
       auton();
+    }
+
+    if (keyPressed() == btnLEFT) {
+      Move(-80, 0, 0);
+
+      delay(500);
+
+      while (FrontLeft.current() < 2.00 || FrontRight.current() < 2.00)
+        ;
+
+      Move(50, 0, 0);
+
+      delay(500);
+
+      Move(0, 0, 0);
     }
 
     switch (getValues(AUTON_DRIVE)) {
@@ -1129,6 +1176,19 @@ int main() {
       Brain.Screen.print(backRightLine.value(percentUnits::pct));
       Brain.Screen.print("  ");
 
+      Brain.Screen.setCursor(4, 10);
+      Brain.Screen.print(FrontLeft.current());
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(4, 15);
+      Brain.Screen.print(FrontRight.current());
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(4, 20);
+      Brain.Screen.print(BackLeft.current());
+      Brain.Screen.print("  ");
+      Brain.Screen.setCursor(4, 25);
+      Brain.Screen.print(BackRight.current());
+      Brain.Screen.print("  ");
+
       if (Brain.Screen.pressing()) {
 
         int xPos = Brain.Screen.xPosition();
@@ -1156,9 +1216,10 @@ int main() {
       Brain.Screen.printAt(150, 120, "2903 S");
     }
 
-    if (tempStatus != currStatus()) {
+    if (tempStatus != currStatus() || autoTempStatus != automatic) {
       statusHUD();
       tempStatus = currStatus();
+      autoTempStatus = automatic;
     }
     task::sleep(200);
   }
