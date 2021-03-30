@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       williamgiles                                              */
+/*    Author:       William Giles                                              */
 /*    Created:      Fri Jul 31 2020                                           */
 /*    Description:  V5 project                                                */
 /*                                                                            */
