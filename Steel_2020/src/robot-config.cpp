@@ -18,9 +18,9 @@ motor RightClaw = motor(PORT2, ratio18_1, true);
 motor Indexer = motor(PORT10, ratio36_1, true);
 motor shitter = motor(PORT9, ratio36_1, false);
 /*vex-vision-config:begin*/
-signature Vision__RED_BALL = signature (1, 5791, 10559, 8174, -1277, 445, -416, 0.8, 0);
+signature Vision__RED_BALL = signature (1, 5791, 10559, 8174, -1277, 445, -416, 0.9, 0);
 signature Vision__BLUE_BALL = signature (2, -3389, -1093, -2241, 1489, 15421, 8455, 0.8, 0);
-vision Vision = vision (PORT20, 74, Vision__RED_BALL, Vision__BLUE_BALL);
+vision Vision = vision (PORT20, 70, Vision__RED_BALL, Vision__BLUE_BALL);
 /*vex-vision-config:end*/
 bumper ball = bumper(Brain.ThreeWirePort.H);
 line frontLeftLine = line(Brain.ThreeWirePort.F);

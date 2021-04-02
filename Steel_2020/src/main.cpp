@@ -38,6 +38,7 @@ competition Competition;
 float move_max = .9;
 float move_min = .3;
 float spin = 1;
+float amp_ = 2.5;
 
 float move = move_max;
 
@@ -356,9 +357,6 @@ void calabrate_vision(void) {
       if (keyPressed() == btnA && ball.pressing()) {
         // calbrate
 
-        signature Vision__BLUE_BALLj =
-            signature(2, -3389, -1093, -2241, 1489, 15421, 8455, 0.8, 0);
-
         wantRed = false;
         wantBlue = false;
         calabrating = false;
@@ -469,6 +467,17 @@ void indexerOff() {
   Indexer.stop();
   shitter.stop();
 }
+void indexerOnOnly() {
+  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+}
+void indexerOffOnly() { Indexer.stop(); }
+void pineappleUp() {
+  shitter.spin(directionType::fwd, 100, velocityUnits::pct);
+}
+void pineappleDown() {
+  shitter.spin(directionType::rev, 100, velocityUnits::pct);
+}
+void pineappleOff() { shitter.stop(); }
 
 void autonLeft(int whenStop) {
 
@@ -591,8 +600,9 @@ void autonLeft(int whenStop) {
 
   delay(200);
 
-  while (frontLeftLine.value(percentUnits::pct) >
-         line_value) { //    from here to
+  while (FrontLeft.current() < amp_ ||
+         FrontRight.current() < amp_) { //    from here to
+
     if (backLeftLine.value(percentUnits::pct) > line_value) {
       BackLeft.spin(directionType::fwd, 75, percentUnits::pct);
       BackRight.spin(directionType::rev, 75, percentUnits::pct);
@@ -614,75 +624,324 @@ void autonLeft(int whenStop) {
 
   delay(60);
 
-  Move(0, 0, 0); // here is fancy auto correct strafe from goal 2 to goal 3
+  Move(-80, 0, 0); // here is fancy auto correct strafe from goal 2 to goal 3
+
+  delay(500);
+
+  Move(0, 0, 0); // cry
+}
+
+void autonRight(int whenStop) {
+  // win
+
+  Move(-40, 0, 0); // crab
+
+  intakeOpen();
+
+  while (backRightLine.value(percentUnits::pct) > line_value) // wait for line
+    ;
+
+  Move(0, 0, 0); // stop drive
+
+  delay(200);
+
+  Move(0, 50, 0); // foward
+
+  delay(500);
+
+  intakeOn(); // intake on
+
+  delay(200);
+
+  Move(0, 0, 0); // stop drive
+
+  indexerOn(); // indexer on
+
+  delay(1000);
+
+  indexerOff(); // indexer off
+
+  delay(200);
+
+  intakeOff(); // intake off
+
+  delay(200);
+
+  FrontRight.spin(directionType::rev, 50, velocityUnits::pct); // from here to
+  BackRight.spin(directionType::rev, 50, velocityUnits::pct);
+
+  FrontLeft.spin(directionType::rev, 50, velocityUnits::pct);
+  BackLeft.spin(directionType::rev, 50, velocityUnits::pct);
+
+  while (frontLeftLine.value(percentUnits::pct) > line_value)
+    ;
+
+  FrontLeft.stop();
+  BackLeft.stop();
+
+  while (frontLeftLine.value(percentUnits::pct) > line_value)
+    ;
+  delay(100);
+
+  FrontRight.stop();
+  BackRight.stop();
+
+  // here is the fancy rotate and wait for line
+
+  if (whenStop == 1)
+    return; // stop if only want to socre 1 ball
+
+  delay(100);
+
+  Move(0, 50, 0); // foward
+
+  delay(500);
+
+  Move(0, 0, 0); // stop
+
+  delay(200);
+
+  while (frontRightLine.value(percentUnits::pct) >
+         line_value) { //    from here to
+    if (backRightLine.value(percentUnits::pct) > line_value) {
+      BackLeft.spin(directionType::rev, 75, percentUnits::pct);
+      BackRight.spin(directionType::fwd, 75, percentUnits::pct);
+      FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+
+    } else {
+      BackLeft.stop();
+      BackRight.stop();
+      FrontLeft.spin(directionType::fwd, 85, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 85, percentUnits::pct);
+    }
+  }
+
+  BackLeft.spin(directionType::rev, 75, percentUnits::pct);
+  BackRight.spin(directionType::fwd, 75, percentUnits::pct);
+  FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
+  FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+
+  delay(60);
+
+  Move(0, 0, 0); // here is fancy auto correct strafe from goal 1 to goal 2
+
+  delay(200);
+
+  Move(0, 50, 0); // forard
+
+  delay(750);
+
+  Move(0, 0, 0); // stop
+
+  indexerOn(); // score
+
+  delay(750);
+
+  indexerOff();
+
+  delay(200);
+
+  Move(0, -50, 0); // back
+
+  delay(300);
+
+  Move(0, 0, 0); // stop
+
+  if (whenStop == 2)
+    return; // stop if only want to socre 2 ball
+
+  delay(200);
+
+  while (FrontLeft.current() < amp_ ||
+         FrontRight.current() < amp_) { //    from here to
+
+    if (backRightLine.value(percentUnits::pct) > line_value) {
+      BackLeft.spin(directionType::rev, 75, percentUnits::pct);
+      BackRight.spin(directionType::fwd, 75, percentUnits::pct);
+      FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+
+    } else {
+      BackLeft.stop();
+      BackRight.stop();
+      FrontLeft.spin(directionType::fwd, 85, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 85, percentUnits::pct);
+    }
+  }
+
+  BackLeft.spin(directionType::rev, 75, percentUnits::pct);
+  BackRight.spin(directionType::fwd, 75, percentUnits::pct);
+  FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
+  FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+
+  delay(60);
+
+  Move(80, 0, 0); // here is fancy auto correct strafe from goal 2 to goal 3
 
   delay(800);
 
   Move(0, 0, 0);
 }
 
-void autonRight(int whenStop) {
+void autonSkillsPlus() {
   // win
 
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
+  indexerOnOnly();
+  pineappleUp();
 
-  Move(-25, 0, 0); // crab
-  delay(1100);
-  Move(0, 0, 0);
-  delay(200);
-
-  LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-  RightClaw.spin(directionType::fwd, 100, velocityUnits::pct); // on
-
-  Move(0, 50, 0);
-  delay(700);
-
-  Indexer.stop();
-
-  delay(300);
-  Move(0, 0, 0);
-  delay(100);
-
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-  delay(200);
-
-  LeftClaw.stop();
-  RightClaw.stop();
-
-  delay(500);
-  Indexer.stop();
-
-  Move(0, 50, 50);
-  delay(500);
-  Move(0, 0, 0);
-
-  Indexer.spin(directionType::fwd, 100, velocityUnits::pct);
-
-  delay(100);
-  Move(80, 0, 0);
-  delay(1350);
-
-  Move(0, 0, 0);
-  delay(100);
-
-  Move(0, 50, 0);
   delay(1000);
+
+  indexerOff();
+  pineappleOff();
+
+  Move(0, -75, 0);
+
+  while (frontRightLine.value(percentUnits::pct) > line_value &&
+         frontLeftLine.value(percentUnits::pct) > line_value)
+    ;
+
   Move(0, 0, 0);
-  delay(100);
 
-  delay(4000);
-  Indexer.stop();
+  float t180 = 2;
+  FrontLeft.startRotateFor(t180, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(t180, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(-t180, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(-t180, rev, 75, velocityUnits::pct);
 
-  Move(0, -100, 0);
+  intakeOpen();
+
+  float f1 = 3;
+  FrontLeft.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f1, rev, 75, velocityUnits::pct);
+
+  intakeClose();
+
+  float f2 = 2;
+  FrontLeft.startRotateFor(f2, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f2, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f2, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f2, rev, 75, velocityUnits::pct);
+
+  indexerOn();
+  pineappleUp();
+
+  intakeOpen();
+
+  float f3 = 2;
+  FrontLeft.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f3, rev, 75, velocityUnits::pct);
+
+  intakeOn();
+
   delay(500);
+
+  indexerOff();
+  pineappleOff();
+
+  float f4 = -1;
+  FrontLeft.startRotateFor(f4, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f4, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f4, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f4, rev, 75, velocityUnits::pct);
+
+  delay(200);
+
+  indexerOn();
+  pineappleDown();
+
+  float f5 = 2;
+  FrontRight.startRotateFor(f5, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f5, rev, 75, velocityUnits::pct);
+
+  indexerOff();
+  pineappleOff();
+
+  float t90 = -2;
+  FrontLeft.startRotateFor(t90, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(t90, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(-t90, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(-t90, rev, 75, velocityUnits::pct);
+
+  intakeOpen();
+
+  float f6 = 3;
+  FrontLeft.startRotateFor(f6, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f6, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f6, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f6, rev, 75, velocityUnits::pct, false);
+
+  intakeOn();
+
+  indexerOn();
+  pineappleUp();
+
+  delay(500);
+
+  intakeOpen();
+
+  indexerOff();
+  pineappleOff();
+
+  float f7 = 2;
+  FrontLeft.startRotateFor(f7, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f7, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f7, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f7, rev, 75, velocityUnits::pct);
+
+  intakeOn();
+
+  indexerOn();
+  pineappleUp();
+
+  delay(500);
+
+  intakeOpen();
+
+  indexerOff();
+  pineappleOff();
+
+  Move(0, 75, 0);
+
+  while (FrontLeft.current() < amp_ || FrontRight.current() < amp_)
+    ;
+
   Move(0, 0, 0);
+
+  indexerOn();
+  pineappleUp();
+
+  delay(500);
+
+  indexerOff();
+  pineappleOff();
+
+  // FrontLeft.startRotateFor(0, deg, 75, velocityUnits::pct);
+  // BackLeft.startRotateFor(0, deg, 75, velocityUnits::pct);
+  // FrontRight.startRotateFor(0, deg, 75, velocityUnits::pct);
+  // BackRight.rotateFor(0, deg, 75, velocityUnits::pct);
 }
 
-void autonSkills() {
-  // win
+void autonSkillsMichale(){
+  
+  indexerOnOnly();
+  pineappleUp();
 
-  Move_d(100, 20);
+  delay(1000);
+
+  indexerOff();
+  pineappleOff();
+
+
+
+
+
 }
+
 
 void auton(void) {
   FrontLeft.setStopping(hold);
@@ -703,13 +962,13 @@ void auton(void) {
   } else if (configuration[1] == 2) { // L 3
     autonLeft(3);
   } else if (configuration[1] == 3) { // R 1
-    autonLeft(1);
+    autonRight(1);
   } else if (configuration[1] == 4) { // R 2
-    autonLeft(2);
+    autonRight(2);
   } else if (configuration[1] == 5) { // R 3
     autonRight(3);
   } else if (configuration[1] == 6) { // Skills
-    autonSkills();
+    // autonSkills();
   }
 
   std::cout << configuration[1] << std::endl;
@@ -853,7 +1112,7 @@ void user(void) {
       move = move_min;
     }
 
-    if (keyPressed() == btnRIGHT && !Competition.isEnabled()) {
+    if (keyPressed() == btnRIGHT) {
       auton();
     }
 
@@ -943,7 +1202,7 @@ void user(void) {
         //&& Vision.largestObject.centerX > 90 && Vision.largestObject.centerX <
         // 160 && Vision.largestObject.centerY > 90
 
-        if (Vision.largestObject.exists && Vision.largestObject.centerX > 20 &&
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 40 &&
             Vision.largestObject.centerX < 200 && ball_found == false) {
           ball_found = true;
 
@@ -953,7 +1212,7 @@ void user(void) {
         }
         Vision.takeSnapshot(Vision__BLUE_BALL);
 
-        if (Vision.largestObject.exists && Vision.largestObject.centerX > 20 &&
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 40 &&
             Vision.largestObject.centerX < 200 && ball_found == false) {
           ball_found = true;
 
