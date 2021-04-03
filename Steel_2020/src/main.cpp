@@ -10,26 +10,27 @@
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // Robot Configuration:
 // [Name]               [Type]        [Port(s)]
-// Controller1          controller
-// FrontLeft            motor         11
-// FrontRight           motor         12
-// BackLeft             motor         16
-// BackRight            motor         17
-// LeftClaw             motor         1
-// RightClaw            motor         2
-// Indexer              motor         10
-// shitter              motor         9
-// Vision               vision        20
-// ball                 bumper        H
-// frontLeftLine        line          F
-// frontRightLine       line          G
-// backLeftLine         line          E
-// backRightLine        line          D
+// Controller1          controller                    
+// FrontLeft            motor         11              
+// FrontRight           motor         12              
+// BackLeft             motor         16              
+// BackRight            motor         17              
+// LeftClaw             motor         1               
+// RightClaw            motor         2               
+// Indexer              motor         10              
+// shitter              motor         9               
+// Vision               vision        20              
+// ball                 bumper        H               
+// frontLeftLine        line          F               
+// frontRightLine       line          G               
+// backLeftLine         line          E               
+// backRightLine        line          D               
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "iostream"
 #include "vex.h"
 #include <string>
+#include <math.h>
 
 using namespace vex;
 using signature = vision::signature;
@@ -57,6 +58,8 @@ int ball_color = NONE;
 double last_pic;
 
 double now;
+
+unsigned long Rec = 0;
 
 #define btnNONE 0
 #define btnUP 1
@@ -106,6 +109,8 @@ bool isCursorOn = false;
 int tempStatus = 0;
 int autoTempStatus = 0;
 
+bool record = false;
+
 int F_Left;
 int B_Left;
 int F_Right;
@@ -117,6 +122,8 @@ int Ch3;
 int Ch4;
 
 void delay(int amount_eeeeee) { task::sleep(amount_eeeeee); }
+
+void log(std::string logggggggg) { std::cout << logggggggg << std::endl; }
 
 //===============================================MADNESS===============================================
 
@@ -479,7 +486,7 @@ void pineappleDown() {
 }
 void pineappleOff() { shitter.stop(); }
 
-void autonLeft(int whenStop) {
+void autonLeft(int whenStop) { //. ==============================================================
 
   Move(40, 0, 0); // crab
 
@@ -488,11 +495,11 @@ void autonLeft(int whenStop) {
   while (backLeftLine.value(percentUnits::pct) > line_value) // wait for line
     ;
 
-  Move(0, 0, 0); // stop drive
+  Move(10, 0, 0); // stop drive
 
   delay(200);
 
-  Move(0, 50, 0); // foward
+  Move(0, 50, 00); // foward
 
   delay(500);
 
@@ -542,7 +549,7 @@ void autonLeft(int whenStop) {
 
   Move(0, 50, 0); // foward
 
-  delay(500);
+  delay(750);
 
   Move(0, 0, 0); // stop
 
@@ -573,17 +580,13 @@ void autonLeft(int whenStop) {
 
   Move(0, 0, 0); // here is fancy auto correct strafe from goal 1 to goal 2
 
-  delay(200);
-
-  Move(0, 50, 0); // forard
-
   delay(750);
 
   Move(0, 0, 0); // stop
 
   indexerOn(); // score
 
-  delay(750);
+  delay(800);
 
   indexerOff();
 
@@ -591,7 +594,7 @@ void autonLeft(int whenStop) {
 
   Move(0, -50, 0); // back
 
-  delay(300);
+  delay(500);
 
   Move(0, 0, 0); // stop
 
@@ -631,7 +634,7 @@ void autonLeft(int whenStop) {
   Move(0, 0, 0); // cry
 }
 
-void autonRight(int whenStop) {
+void autonRight(int whenStop) { // ==============================================================
   // win
 
   Move(-40, 0, 0); // crab
@@ -641,15 +644,15 @@ void autonRight(int whenStop) {
   while (backRightLine.value(percentUnits::pct) > line_value) // wait for line
     ;
 
-  Move(0, 0, 0); // stop drive
+  Move(10, 0, 0); // stop drive
 
   delay(200);
 
-  Move(0, 50, 0); // foward
+  Move(0, 50, 5); // foward
 
-  delay(500);
+  delay(800);
 
-  intakeOn(); // intake on
+  intakeOn(); // intake on ========== 
 
   delay(200);
 
@@ -657,13 +660,13 @@ void autonRight(int whenStop) {
 
   indexerOn(); // indexer on
 
-  delay(1000);
-
-  indexerOff(); // indexer off
-
   delay(200);
 
-  intakeOff(); // intake off
+  intakeOpen();
+
+  delay(800);
+
+  indexerOff(); // indexer off
 
   delay(200);
 
@@ -671,17 +674,20 @@ void autonRight(int whenStop) {
   BackRight.spin(directionType::rev, 50, velocityUnits::pct);
 
   FrontLeft.spin(directionType::rev, 50, velocityUnits::pct);
-  BackLeft.spin(directionType::rev, 50, velocityUnits::pct);
+  BackLeft.spin(directionType::rev, 50, velocityUnits::pct); 
 
   while (frontLeftLine.value(percentUnits::pct) > line_value)
     ;
+
+  FrontLeft.spin(directionType::rev, 50, velocityUnits::pct);
+  BackLeft.spin(directionType::rev, 50, velocityUnits::pct); 
 
   FrontLeft.stop();
   BackLeft.stop();
 
-  while (frontLeftLine.value(percentUnits::pct) > line_value)
+  while (frontRightLine.value(percentUnits::pct) > line_value)
     ;
-  delay(100);
+  delay(200);
 
   FrontRight.stop();
   BackRight.stop();
@@ -695,7 +701,7 @@ void autonRight(int whenStop) {
 
   Move(0, 50, 0); // foward
 
-  delay(500);
+  delay(750);
 
   Move(0, 0, 0); // stop
 
@@ -704,23 +710,23 @@ void autonRight(int whenStop) {
   while (frontRightLine.value(percentUnits::pct) >
          line_value) { //    from here to
     if (backRightLine.value(percentUnits::pct) > line_value) {
-      BackLeft.spin(directionType::rev, 75, percentUnits::pct);
-      BackRight.spin(directionType::fwd, 75, percentUnits::pct);
-      FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
-      FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+      BackLeft.spin(directionType::rev, 50, percentUnits::pct);
+      BackRight.spin(directionType::fwd, 50, percentUnits::pct);
+      FrontLeft.spin(directionType::fwd, 50, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 50, percentUnits::pct);
 
     } else {
       BackLeft.stop();
       BackRight.stop();
-      FrontLeft.spin(directionType::fwd, 85, percentUnits::pct);
-      FrontRight.spin(directionType::rev, 85, percentUnits::pct);
+      FrontLeft.spin(directionType::fwd, 50, percentUnits::pct);
+      FrontRight.spin(directionType::rev, 50, percentUnits::pct);
     }
   }
 
-  BackLeft.spin(directionType::rev, 75, percentUnits::pct);
-  BackRight.spin(directionType::fwd, 75, percentUnits::pct);
-  FrontLeft.spin(directionType::fwd, 75, percentUnits::pct);
-  FrontRight.spin(directionType::rev, 75, percentUnits::pct);
+  BackLeft.spin(directionType::rev, 50, percentUnits::pct);
+  BackRight.spin(directionType::fwd, 50, percentUnits::pct);
+  FrontLeft.spin(directionType::fwd, 50, percentUnits::pct);
+  FrontRight.spin(directionType::rev, 50, percentUnits::pct);
 
   delay(60);
 
@@ -736,7 +742,7 @@ void autonRight(int whenStop) {
 
   indexerOn(); // score
 
-  delay(750);
+  delay(800);
 
   indexerOff();
 
@@ -744,7 +750,7 @@ void autonRight(int whenStop) {
 
   Move(0, -50, 0); // back
 
-  delay(300);
+  delay(500);
 
   Move(0, 0, 0); // stop
 
@@ -777,9 +783,21 @@ void autonRight(int whenStop) {
 
   delay(60);
 
-  Move(80, 0, 0); // here is fancy auto correct strafe from goal 2 to goal 3
+  Move(-50, 0, -30); // here is fancy auto correct strafe from goal 2 to goal 3
 
-  delay(800);
+  delay(300);
+
+  Move(0, 50, 0);
+
+  indexerOn();
+
+  delay(500);
+
+  indexerOff();
+
+  Move(-50, 0, 0);
+
+  delay(500);
 
   Move(0, 0, 0);
 }
@@ -926,22 +944,87 @@ void autonSkillsPlus() {
   // BackRight.rotateFor(0, deg, 75, velocityUnits::pct);
 }
 
-void autonSkillsMichale(){
+void autonSkillsMichale() {
+
+  indexerOnOnly();
+
+  delay(250);
+
+  indexerOffOnly();
+
+  intakeOpen();
+
+  float f1 = 1.1;
+  FrontLeft.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f1, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f1, rev, 75, velocityUnits::pct);
+
+  intakeOn();
+
+  indexerOnOnly();
+  pineappleUp();
   
+  delay(500);
+
+  intakeOpen();
+
+  indexerOffOnly();
+  pineappleOff();
+
+  float f2 = 2.9;
+  FrontLeft.startRotateFor(f2, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f2, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f2, rev, 70, velocityUnits::pct);
+  BackRight.rotateFor(f2, rev, 70, velocityUnits::pct);
+
+  intakeOn();
+
   indexerOnOnly();
   pineappleUp();
 
-  delay(1000);
+  delay(500);
 
-  indexerOff();
+  indexerOffOnly();
   pineappleOff();
 
+  intakeOpen();
 
+  float t1 = 1.4;
+  FrontLeft.startRotateFor(t1, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(t1, rev, 75, velocityUnits::pct);
 
+  delay(500);
 
+  float f3 = 1.2;
+  FrontLeft.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  BackLeft.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  FrontRight.startRotateFor(f3, rev, 75, velocityUnits::pct);
+  BackRight.rotateFor(f3, rev, 75, velocityUnits::pct);
+
+  delay(500);
+
+  indexerOnOnly();
+  intakeOn();
+
+  delay(300);
+
+  indexerOffOnly();
+
+  float f4 = -1;
+  FrontLeft.startRotateFor(f4, rev, 50, velocityUnits::pct);
+  BackLeft.startRotateFor(f4, rev, 50, velocityUnits::pct);
+  FrontRight.startRotateFor(f4, rev, 50, velocityUnits::pct);
+  BackRight.rotateFor(f4, rev, 50, velocityUnits::pct);
+
+  intakeOff();
+  
+  delay(500);
 
 }
-
+void rec1() {
+  // no
+}
 
 void auton(void) {
   FrontLeft.setStopping(hold);
@@ -969,9 +1052,8 @@ void auton(void) {
     autonRight(3);
   } else if (configuration[1] == 6) { // Skills
     // autonSkills();
+    autonSkillsMichale();
   }
-
-  std::cout << configuration[1] << std::endl;
 
   notificationHUD("Auton: DONE");
   Controller1.rumble(".");
@@ -1001,6 +1083,7 @@ void RCDrive(void) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
+
   FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
   FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
 
@@ -1012,6 +1095,7 @@ void RCDrive2(void) {
   Ch1 = Controller1.Axis1.position(percent) * move;
   Ch3 = Controller1.Axis3.position(percent) * move;
   Ch4 = Controller1.Axis4.position(percent) * move;
+  Ch4 = Ch4 * spin;
 
   if (Ch1 < dead_zone && Ch1 > -dead_zone) {
     Ch1 = 0;
@@ -1031,10 +1115,12 @@ void RCDrive2(void) {
   F_Right = Ch3 - Ch4 - Ch1;
   B_Right = Ch3 - Ch4 + Ch1;
 
-  FrontLeft.spin(directionType::fwd, F_Left, velocityUnits::pct);
-  BackLeft.spin(directionType::fwd, B_Left, velocityUnits::pct);
-  FrontRight.spin(directionType::fwd, F_Right, velocityUnits::pct);
-  BackRight.spin(directionType::fwd, B_Right, velocityUnits::pct);
+
+  FrontLeft.spin(directionType::fwd, (1/1+exp(-10*(F_Left-.5))) * 100, velocityUnits::pct);
+  FrontRight.spin(directionType::fwd, (1/1+exp(-10*(F_Right-.5))) * 100, velocityUnits::pct);
+
+  BackRight.spin(directionType::fwd, (1/1+exp(-10*(B_Right-.5))) * 100, velocityUnits::pct);
+  BackLeft.spin(directionType::fwd, (1/1+exp(-10*(B_Left-.5))) * 100, velocityUnits::pct);
 }
 
 void tankDrive(void) {
@@ -1095,41 +1181,55 @@ void user(void) {
   while (1) {
     now = Brain.timer(msec);
 
-    if (keyPressed() == btnY) {
+    if (now - Rec > 50 && record) {
+
+      Rec = now;
+
+      Ch1 = Controller1.Axis1.position(percent) * move;
+      Ch3 = Controller1.Axis3.position(percent) * move;
+      Ch4 = Controller1.Axis4.position(percent) * move;
+      Ch4 = Ch4 * spin;
+
+      if (Ch1 < dead_zone && Ch1 > -dead_zone) {
+        Ch1 = 0;
+      }
+      if (Ch3 < dead_zone && Ch3 > -dead_zone) {
+        Ch3 = 0;
+      }
+      if (Ch4 < dead_zone && Ch4 > -dead_zone) {
+        Ch4 = 0;
+      }
+
+      char buf[16];
+      sprintf(buf, "Move(%d, %d, %d);", Ch1, Ch3, Ch4);
+      log(buf);
+
+      // sprintf(buf, "delay(%d);", int(now - RecLast));
+      log("delay(50);");
+    }
+
+    if (keyPressedRaw() == btnY) {
       automatic = !automatic;
       while (keyPressed() == btnY)
         ;
     }
 
-    if (keyPressed() == btnA) {
-      // calabrate_vision();
-    }
-
-    if (keyPressed() == btnUP) {
+    if (keyPressedRaw() == btnUP) {
       move = move_max;
     }
-    if (keyPressed() == btnDOWN) {
+    if (keyPressedRaw() == btnDOWN) {
       move = move_min;
     }
 
-    if (keyPressed() == btnRIGHT) {
+    if (keyPressedRaw() == btnRIGHT) {
       auton();
     }
 
-    if (keyPressed() == btnLEFT) {
-      Move(-80, 0, 0);
-
-      delay(500);
-
-      while (FrontLeft.current() < 2.00 || FrontRight.current() < 2.00)
-        ;
-
-      Move(50, 0, 0);
-
-      delay(500);
-
-      Move(0, 0, 0);
-    }
+    // if (keyPressedRaw() == btnLEFT) {
+    //   record = !record;
+    //   while (keyPressedRaw() == btnLEFT)
+    //     ;
+    // }
 
     switch (getValues(AUTON_DRIVE)) {
     case RC:
@@ -1145,18 +1245,6 @@ void user(void) {
       break;
     }
 
-    // if (Controller1.ButtonL2.pressing()) {
-    //   LeftClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
-    //   RightClaw.spin(directionType::rev, 100 * move, velocityUnits::pct);
-    // } else {
-    //   if (intake) {
-    //     LeftClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-    //     RightClaw.spin(directionType::fwd, 100, velocityUnits::pct);
-    //   } else {
-    //     LeftClaw.stop();
-    //     RightClaw.stop();
-    //   }
-    // }
 
     if (Controller1.ButtonL1.pressing()) {
       LeftClaw.setStopping(coast);
@@ -1189,7 +1277,8 @@ void user(void) {
       }
     }
 
-    if (automatic) { //======================================================
+    if (automatic &&
+        !record) { //======================================================
 
       if (now - last_pic > 500 || ball.pressing()) {
         last_pic = now;
@@ -1202,8 +1291,7 @@ void user(void) {
         //&& Vision.largestObject.centerX > 90 && Vision.largestObject.centerX <
         // 160 && Vision.largestObject.centerY > 90
 
-        if (Vision.largestObject.exists && Vision.largestObject.centerX > 40 &&
-            Vision.largestObject.centerX < 200 && ball_found == false) {
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 110 && ball_found == false) {
           ball_found = true;
 
           ball_color = RED;
@@ -1212,8 +1300,7 @@ void user(void) {
         }
         Vision.takeSnapshot(Vision__BLUE_BALL);
 
-        if (Vision.largestObject.exists && Vision.largestObject.centerX > 40 &&
-            Vision.largestObject.centerX < 200 && ball_found == false) {
+        if (Vision.largestObject.exists && Vision.largestObject.centerX > 110 && ball_found == false) {
           ball_found = true;
 
           ball_color = BLUE;
@@ -1316,7 +1403,7 @@ void user(void) {
         }
       }
 
-    } else { // auto ^^^^ .       manuel vvvvvv
+    } else if (!automatic && !record) { // auto ^^^^ .       manuel vvvvvv
 
       if (Controller1.ButtonX.pressing()) {
         if (Controller1.ButtonR1.pressing()) {
@@ -1377,7 +1464,17 @@ int main() {
   Competition.autonomous(auton);
   Competition.drivercontrol(user);
 
-  std::cout << "Hello World" << std::endl;
+  if (getValues(AUTON_COLOR) == RED) {
+    Brain.Screen.setFillColor(red);
+  } else if (getValues(AUTON_COLOR) == BLUE) {
+    Brain.Screen.setFillColor(blue);
+  }
+
+  Brain.Screen.drawRectangle(-10, -10, 500, 500);
+
+  Brain.Screen.setPenColor(color::white);
+  Brain.Screen.setFont(prop60);
+  Brain.Screen.printAt(150, 120, "2903 S");
 
   while (1) {
     power_usage = 0;
@@ -1460,19 +1557,6 @@ int main() {
           Brain.Screen.clearScreen();
         }
       }
-
-    } else {
-      if (getValues(AUTON_COLOR) == RED) {
-        Brain.Screen.setFillColor(red);
-      } else if (getValues(AUTON_COLOR) == BLUE) {
-        Brain.Screen.setFillColor(blue);
-      }
-
-      Brain.Screen.drawRectangle(-10, -10, 500, 500);
-
-      Brain.Screen.setPenColor(color::white);
-      Brain.Screen.setFont(prop60);
-      Brain.Screen.printAt(150, 120, "2903 S");
     }
 
     if (tempStatus != currStatus() || autoTempStatus != automatic) {
@@ -1480,6 +1564,6 @@ int main() {
       tempStatus = currStatus();
       autoTempStatus = automatic;
     }
-    task::sleep(200);
+    delay(200);
   }
 }
